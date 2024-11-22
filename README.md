@@ -14,7 +14,7 @@ goose -dir ./database/migration {sqlserver} "{sqlserver}://{USERDB}:{PASSWORDDB}
 
 go run cmd/main.go
 
-## --------------------------------------------------------------------
+
 
 # API Endpoints Documentation
 
