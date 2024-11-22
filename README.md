@@ -1,19 +1,20 @@
 # Brand_Backend
-
+```json
 GO + Sql Server to - Create Brand POST /brand Create brand endpoint - Create Voucher POST /voucher Create voucher endpoint - Get Single Voucher GET /voucher?id={voucher_id} - Get All Vouchers by Brand GET /voucher/brand?id={brand_id}
-
+```
 # How to run
 
-## 1 Create Database
+## 1. Create Database
 
-## 2 Migrations
-
+## 2. Migrations
+```json
 goose -dir ./database/migration {sqlserver} "{sqlserver}://{USERDB}:{PASSWORDDB}@localhost:{PORT}?database=VoucherAPI" up
+```
 
-## 3 Run App
-
+## 3. Run App
+```json
 go run cmd/main.go
-
+```
 
 
 # API Endpoints Documentation
