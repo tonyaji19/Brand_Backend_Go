@@ -1,8 +1,6 @@
 # Brand_Backend
 ```json
-
-` GO + Sql Server to - Create Brand POST /brand Create brand endpoint - Create Voucher POST /voucher Create voucher endpoint - Get Single Voucher GET /voucher?id={voucher_id} - Get All Vouchers by Brand GET /voucher/brand?id={brand_id} `
-
+" GO + Sql Server to - Create Brand POST /brand Create brand endpoint - Create Voucher POST /voucher Create voucher endpoint - Get Single Voucher GET /voucher?id={voucher_id} - Get All Vouchers by Brand GET /voucher/brand?id={brand_id} "
 ```
 # How to run
 
@@ -15,7 +13,7 @@
 
 ## 3. Run App
 ```json
-'go run cmd/main.go'
+"go run cmd/main.go"
 ```
 
 
