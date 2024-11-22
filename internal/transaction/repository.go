@@ -8,9 +8,6 @@ type TransactionRepository interface {
 	CreateTransaction(transaction *Transaction) error
 	GetTransactionByID(transactionID int) (*Transaction, error)
 	GetAllTransactions() ([]Transaction, error) 
-
-	
-
 }
 
 type transactionRepository struct {
@@ -28,7 +25,7 @@ func (r *transactionRepository) CreateTransaction(transaction *Transaction) erro
 	return nil
 }
 
-// GetAllTransactions retrieves all transactions
+// GetAllTransactions retrieves all transactions with their associated items
 func (r *transactionRepository) GetAllTransactions() ([]Transaction, error) {
 	var transactions []Transaction
 	err := r.db.Preload("Items").Find(&transactions).Error
@@ -44,9 +41,9 @@ func (r *transactionRepository) GetTransactionByID(transactionID int) (*Transact
 	err := r.db.Preload("Items").First(&transaction, transactionID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil // No transaction found
+			return nil, nil 
 		}
-		return nil, err // Return error if something else goes wrong
+		return nil, err 
 	}
 	return &transaction, nil
 }

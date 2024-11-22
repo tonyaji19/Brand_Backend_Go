@@ -19,7 +19,7 @@ type voucherRepository struct {
 
 // NewVoucherRepository initializes a new voucher repository
 func NewVoucherRepository(db *gorm.DB) VoucherRepository {
-	return &voucherRepository{db: db} // Sesuai dengan tipe *voucherRepository
+	return &voucherRepository{db: db} 
 }
 
 // CreateVoucher creates a new voucher
@@ -31,7 +31,7 @@ func (r *voucherRepository) CreateVoucher(voucher *Voucher) error {
 }
 
 // GetVoucherByID retrieves a voucher by its ID
-func (r *voucherRepository) GetVoucherByID(id int) (*Voucher, error) { // Tipe receiver diperbaiki
+func (r *voucherRepository) GetVoucherByID(id int) (*Voucher, error) { 
 	var voucher Voucher
 	err := r.db.Preload("Brand").First(&voucher, id).Error
 	if err != nil {
@@ -41,7 +41,7 @@ func (r *voucherRepository) GetVoucherByID(id int) (*Voucher, error) { // Tipe r
 }
 
 // GetAllVouchers retrieves all vouchers
-func (r *voucherRepository) GetAllVouchers() ([]Voucher, error) { // Tipe receiver diperbaiki
+func (r *voucherRepository) GetAllVouchers() ([]Voucher, error) { 
 	var vouchers []Voucher
 	err := r.db.Preload("Brand").Find(&vouchers).Error
 	return vouchers, err

@@ -16,11 +16,69 @@ import (
 	"gorm.io/gorm"
 )
 
+// CreateRedemptionHandler handles the creation of a redemption transaction
+func CreateRedemptionHandler(repo transaction.TransactionRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var redemptionRequest transaction.RedemptionRequest
+		if err := json.NewDecoder(r.Body).Decode(&redemptionRequest); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
 
+		tx := transaction.Transaction{
+			CustomerName: redemptionRequest.CustomerName,
+			TotalPoints:  0, 
+		}
+
+		var items []transaction.TransactionItem
+		totalPoints := 0
+		for _, item := range redemptionRequest.VoucherItems {
+			totalPoints += item.Quantity * item.Points
+			items = append(items, transaction.TransactionItem{
+				VoucherID:   item.VoucherID,
+				Quantity:    item.Quantity,
+				TotalPoints: item.Quantity * item.Points,
+			})
+		}
+
+		tx.Items = items
+		tx.TotalPoints = totalPoints
+
+		if err := repo.CreateTransaction(&tx); err != nil {
+			http.Error(w, "Failed to create redemption transaction", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(tx)
+	}
+}
+// GetRedemptionByTransactionIDHandler handles fetching a redemption transaction by transaction ID
+func GetRedemptionByTransactionIDHandler(repo transaction.TransactionRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		transactionIDStr := vars["transactionId"]
+
+		transactionID, err := strconv.Atoi(transactionIDStr)
+		if err != nil {
+			http.Error(w, "Invalid transactionId", http.StatusBadRequest)
+			return
+		}
+
+		transaction, err := repo.GetTransactionByID(transactionID)
+		if err != nil {
+			http.Error(w, "Transaction not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(transaction)
+	}
+}
 
 func GetVouchersByBrandHandler(repo voucher.VoucherRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Ambil parameter query id
 		brandIDStr := r.URL.Query().Get("id")
 		if brandIDStr == "" {
 			http.Error(w, "brand_id is required", http.StatusBadRequest)
@@ -33,14 +91,12 @@ func GetVouchersByBrandHandler(repo voucher.VoucherRepository) http.HandlerFunc 
 			return
 		}
 
-		// Ambil data voucher berdasarkan brand_id
 		vouchers, err := repo.GetVouchersByBrandID(brandID)
 		if err != nil {
 			http.Error(w, "Failed to fetch vouchers", http.StatusInternalServerError)
 			return
 		}
 
-		// Kirim response
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(vouchers)
 	}
@@ -210,47 +266,38 @@ func CreateBrandHandler(repo brand.BrandRepository) http.HandlerFunc {
 }
 
 func main() {
-	// Database Connection
 	db, err := config.GetDBConnection()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Run Database Migrations
 	database.RunMigrations()
 
-	// Repositories
 	brandRepo := brand.NewBrandRepository(db)
 	voucherRepo := voucher.NewVoucherRepository(db)
 	transactionRepo := transaction.NewTransactionRepository(db)
 
-	// Router
 	router := mux.NewRouter()
 
-	// Define routes
 	router.HandleFunc("/brands", GetAllBrandsHandler(brandRepo)).Methods("GET")
 	router.HandleFunc("/brands/{id:[0-9]+}", GetBrandByIDHandler(brandRepo)).Methods("GET")
 	router.HandleFunc("/brands", CreateBrandHandler(brandRepo)).Methods("POST")
 
-	// Voucher Routes
 	router.HandleFunc("/vouchers", GetAllVouchersHandler(voucherRepo)).Methods("GET")
 	router.HandleFunc("/vouchers/{id:[0-9]+}", GetVoucherByIDHandler(voucherRepo)).Methods("GET")
 	router.HandleFunc("/vouchers", CreateVoucherHandler(voucherRepo)).Methods("POST")
-	router.HandleFunc("/voucher/brand", GetVouchersByBrandHandler(voucherRepo)).Methods("GET") // Tambahkan route ini
-
-
+	router.HandleFunc("/voucher/brand", GetVouchersByBrandHandler(voucherRepo)).Methods("GET") 
 
 	router.HandleFunc("/transactions", GetAllTransactionsHandler(transactionRepo)).Methods("GET")
 	router.HandleFunc("/transactions/{id:[0-9]+}", GetTransactionByIDHandler(transactionRepo)).Methods("GET")
 	router.HandleFunc("/transactions", CreateTransactionHandler(transactionRepo)).Methods("POST")
-	//router.HandleFunc("/transaction/redemption", transaction.CreateRedemptionHandler(transactionRepo)).Methods("POST")
+	router.HandleFunc("/transactions/redemption", CreateRedemptionHandler(transactionRepo)).Methods("POST")
+	router.HandleFunc("/transactions/redemption/{transactionId:[0-9]+}", GetRedemptionByTransactionIDHandler(transactionRepo)).Methods("GET")
+	
 
-
-	// Start Server
 	log.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 
-	// Query vouchers and print
 	queryAndPrintVouchers(db)
 }
 
